@@ -5,8 +5,16 @@ import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
 import sympy as smp
+from sympy.parsing.sympy_parser import parse_expr, standard_transformations, implicit_multiplication_application, convert_xor
+
 
 st.set_page_config(page_title="Vector Fields", layout="wide")
+
+transformations = (
+    standard_transformations +
+    (implicit_multiplication_application,) +
+    (convert_xor,)
+)
 
 x, y = np.meshgrid(np.linspace(-2, 2, 20), np.linspace(-2, 2, 20))
 sym_x, sym_y, t = smp.symbols("x , y, t")
@@ -20,8 +28,16 @@ with col1:
     st.divider()
     st.subheader("Enter your vector field")
     with st.container(border=True):
-        U=st.text_input("F<U, V>", placeholder="U")
-        V=st.text_input("", placeholder="V")
+        U_inp=st.text_input("F<U, V>", placeholder="U")
+        try:
+            U=smp.parse_expr(U_inp, transformations=transformations, local_dict={"e": smp.E})
+        except:
+            pass
+        V_inp=st.text_input("", placeholder="V")
+        try:
+            V=smp.parse_expr(V_inp, transformations=transformations, local_dict={"e": smp.E})
+        except:
+            pass
 
 with sidebar:
     curl = st.checkbox("Compute curl")
@@ -42,14 +58,14 @@ with sidebar:
                 \end{{aligned}}
                 """)
         except Exception as e:
-            st.error("Engine failure details:")
-            st.exception(e)
+            st.warning("Couldn't compute")
     div = st.checkbox("Compute divergence")
     if div:
         try:
             ux = smp.diff(U, sym_x)
             vy = smp.diff(V, sym_y)
-            st.latex(rf"\operatorname{{div}}(\vec{{F}}) = {ux+vy}")
+            latexdiv = smp.latex(ux+vy)
+            st.latex(rf"\operatorname{{div}}(\vec{{F}}) = {latexdiv}")
         except:
             st.warning("Couldn't compute")
     work = st.checkbox("Compute work integral")
@@ -60,16 +76,14 @@ with sidebar:
         tf_s = st.text_input("Insert ending value of t")
         if xt_s and yt_s and ts_s and tf_s:
                 try:
-                    xt = smp.parse_expr(xt_s)
-                    yt = smp.parse_expr(yt_s)
-                    ts = smp.parse_expr(ts_s)
-                    tf = smp.parse_expr(tf_s)
-                    usmp=smp.parse_expr(U)
-                    vsmp=smp.parse_expr(V)
+                    xt = smp.parse_expr(xt_s, transformations=transformations, local_dict={"e": smp.E})
+                    yt = smp.parse_expr(yt_s, transformations=transformations, local_dict={"e": smp.E})
+                    ts = smp.parse_expr(ts_s, transformations=transformations, local_dict={"e": smp.E})
+                    tf = smp.parse_expr(tf_s, transformations=transformations, local_dict={"e": smp.E})
                     dtx = smp.diff(xt, t)
                     dty = smp.diff(yt, t)
-                    ut = usmp.subs({sym_x: xt, sym_y: yt})
-                    vt = vsmp.subs({sym_x: xt, sym_y: yt})
+                    ut = U.subs({sym_x: xt, sym_y: yt})
+                    vt = V.subs({sym_x: xt, sym_y: yt})
                     integrand = ut*dtx + vt*dty
                     integrandl = smp.latex(integrand)
                     res = smp.integrate(integrand, (t, ts, tf))
@@ -85,16 +99,14 @@ with sidebar:
         tf_s = st.text_input("Insert ending value of t ")
         if xt_s and yt_s and ts_s and tf_s:
             try:
-                xt = smp.parse_expr(xt_s)
-                yt = smp.parse_expr(yt_s)
-                ts = smp.parse_expr(ts_s)
-                tf = smp.parse_expr(tf_s)
-                usmp=smp.parse_expr(U)
-                vsmp=smp.parse_expr(V)
+                xt = smp.parse_expr(xt_s, transformations=transformations, local_dict={"e": smp.E})
+                yt = smp.parse_expr(yt_s, transformations=transformations, local_dict={"e": smp.E})
+                ts = smp.parse_expr(ts_s, transformations=transformations, local_dict={"e": smp.E})
+                tf = smp.parse_expr(tf_s, transformations=transformations, local_dict={"e": smp.E})
                 dtx = smp.diff(xt, t)
                 dty = smp.diff(yt, t)
-                ut = usmp.subs({sym_x: xt, sym_y: yt})
-                vt = vsmp.subs({sym_x: xt, sym_y: yt})
+                ut = U.subs({sym_x: xt, sym_y: yt})
+                vt = V.subs({sym_x: xt, sym_y: yt})
                 integrand = ut*dty - vt*dtx
                 integrandl = smp.latex(integrand)
                 res = smp.integrate(integrand, (t, ts, tf))
@@ -103,8 +115,11 @@ with sidebar:
             except:
                 st.warning("Couldn't compute")
 fig = None
-uf=smp.lambdify([sym_x, sym_y], U, modules="numpy")
-vf=smp.lambdify([sym_x, sym_y], V, modules="numpy")
+try:
+    uf=smp.lambdify([sym_x, sym_y], U, modules="numpy")
+    vf=smp.lambdify([sym_x, sym_y], V, modules="numpy")
+except:
+    pass
 
 try:
     u=uf(x,y)

@@ -4,21 +4,30 @@ import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
 import sympy as smp
+from sympy.parsing.sympy_parser import parse_expr, standard_transformations, implicit_multiplication_application, convert_xor
 
 st.set_page_config(page_title="Graphing Calculator", layout="wide")
 
-sym_x=smp.symbols("x")
+transformations = (
+    standard_transformations +
+    (implicit_multiplication_application,) +
+    (convert_xor,)
+)
+
+
+sym_x, e=smp.symbols("x, e")
 
 sidebar = st.sidebar
 col1, col2 = st.columns([1, 3])
 
 if "blocks" not in st.session_state:
-        st.session_state.blocks=[{"text": "", "color": "#0091f9"}]
+        st.session_state.blocks=[{"text": "", "color": "#0091f9", "show": True}]
 
-def add_block(index, current_text, current_color):
+def add_block(index, current_text, current_color, show_btn):
+    st.session_state.blocks[index]["show"] = show_btn
     st.session_state.blocks[index]["text"] = current_text
     st.session_state.blocks[index]["color"] = current_color
-    st.session_state.blocks.insert(index + 1, {"text": current_text, "color": current_color})
+    st.session_state.blocks.insert(index + 1, {"text": current_text, "color": current_color, "show": True})
 
 def mikami(index):
     st.session_state.blocks.pop(index)
@@ -29,28 +38,31 @@ with col1:
     st.subheader("Functions:")
     for i, block in enumerate(st.session_state.blocks):
         with st.container(border=True):
-            input_function = st.text_input("", value=block["text"], key=f"text_{i}")
-            st.session_state.blocks[i]["text"] = input_function
-            c1, c2 = st.columns([1, 1])
-            with c1:
-                col = st.color_picker("Pick a color", block["color"], key=f"color_{i}")
-                st.session_state.blocks[i]["color"] = col
-            with c2:
-                st.write("")
-                st.write("")
-                st.button(
-                    "Insert new function",
-                    key=f"btn_{i}",
-                    on_click=add_block,
-                    args=(i, input_function, col)
-                )
+            cu1, cu2, cu3 = st.columns([1,3,1])
+            with cu1:
+                show = st.checkbox("", value=block["show"], key=f"show_{i}", label_visibility="collapsed")
+            with cu3:
                 if len(st.session_state.blocks) > 1:
                     st.button(
-                        "DELETE",
+                        "🗑️",
                         key=f"del_{i}",
                         on_click=mikami,
                         args=(i,),
                     )
+            st.session_state.blocks[i]["show"] = show
+            input_function = st.text_input("", value=block["text"], key=f"text_{i}", label_visibility="collapsed")
+            st.session_state.blocks[i]["text"] = input_function
+            c1, c2, c3 = st.columns([1, 3, 1])
+            with c1:
+                col = st.color_picker("", block["color"], key=f"color_{i}", label_visibility="collapsed")
+                st.session_state.blocks[i]["color"] = col
+            with c3:
+                st.button(
+                    "➕",
+                    key=f"btn_{i}",
+                    on_click=add_block,
+                    args=(i, input_function, col, show)
+                )
 with sidebar:
     st.header("Settings")
     c1, c2= st.columns([1,1])
@@ -70,14 +82,16 @@ with sidebar:
         for block in st.session_state.blocks:
             expr_str=block["text"]
             color=block["color"]
-            st.write("f'(",expr_str,")=",smp.diff(expr_str))
+            sympy_expression = smp.parse_expr(expr_str, transformations=transformations, local_dict={"e": smp.E})
+            st.write("f'(",expr_str,")=",smp.diff(sympy_expression))
     zeros=st.checkbox("Show zeros", value=False)
     if zeros:
         for block in st.session_state.blocks:
             expr_str=block["text"]
             color=block["color"]
+            sympy_expression = smp.parse_expr(expr_str, transformations=transformations, local_dict={"e": smp.E})
             st.write("Zeros of the function ", expr_str, ":")
-            sols = smp.solve(expr_str,sym_x)
+            sols = smp.solve(sympy_expression,sym_x)
             realsols = [sol for sol in sols if sol.is_real]
             a= ""
             for zero in realsols:
@@ -92,23 +106,25 @@ fig=go.Figure()
 for block in st.session_state.blocks:
     expr_str=block["text"]
     color=block["color"]
+    shown=block["show"]
     if not expr_str.strip():
         continue
-    try: 
-        sympy_expression = smp.parse_expr(expr_str)
-        f=smp.lambdify(sym_x, sympy_expression, modules="numpy")
-        y = np.array([float(f(val)) for val in x])
-        dy=np.abs(np.diff(y))
-        y[:-1][dy > 100] = np.nan
-        fig.add_trace(go.Scatter(x=x, y=y, mode="lines", name=expr_str,
+    try:
+        if shown:
+            sympy_expression = smp.parse_expr(expr_str, transformations=transformations, local_dict={"e": smp.E})
+            f=smp.lambdify(sym_x, sympy_expression, modules="numpy")
+            y = np.array([float(f(val)) for val in x])
+            dy=np.abs(np.diff(y))
+            y[:-1][dy > 100] = np.nan
+            fig.add_trace(go.Scatter(x=x, y=y, mode="lines", name=expr_str,
                                 line=dict(color=color, width=4)))
         
-        if derivative:
-            diff = smp.lambdify(sym_x, smp.diff(sympy_expression),  modules="numpy")
-            d = np.array([float(diff(val)) for val in x])
-            dd=np.abs(np.diff(d))
-            d[:-1][dd > 100] = np.nan
-            fig.add_trace(go.Scatter(x=x, y=d, mode='lines', name=("d/dx"),
+            if derivative:
+                diff = smp.lambdify(sym_x, smp.diff(sympy_expression),  modules="numpy")
+                d = np.array([float(diff(val)) for val in x])
+                dd=np.abs(np.diff(d))
+                d[:-1][dd > 100] = np.nan
+                fig.add_trace(go.Scatter(x=x, y=d, mode='lines', name=(f"d/dx ({expr_str})"),
                                     line=dict(color=color, width=4, dash="dash")))
 
     except Exception as e:
