@@ -173,53 +173,54 @@ with column2:
                         st.latex(smp.integrate(equation, (z, zlow, zup), (y, ylow, yup), (x, xlow, xup)))               
                     else: st.warning("Please check order of integration carefully")
             except Exception as e:
-                st.waring("Couldn't integrate")
+                st.warning("Couldn't integrate")
 
 fig=go.Figure()
 x_val=np.linspace(-1000,1000,100000)
-try:
-    if smp.diff(equation) == 0:
-        f=smp.lambdify(x, equation, "numpy")
-        y_val = np.array([f(val) for val in x_val])
-    else:
-        f=smp.lambdify(x, equation, "numpy")
-        y_val=f(x_val)
-        dy=np.abs(np.diff(y_val))
-        y_val[:-1][dy > 100] = np.nan
-    fig.add_trace(go.Scatter(x=x_val, y=y_val, mode="lines", name=equatio,
-    line=dict(color="#0091f9", width=4)))
-    fig.update_layout(
-    hovermode="x unified",
-    template="plotly_white", 
-    xaxis=dict(
-        range=[-5, 5],
-        showgrid=True,
-        gridwidth=1,
+if selected not in ["double integral", "triple integral"]:
+    try:
+        if smp.diff(equation) == 0:
+            f=smp.lambdify(x, equation, "numpy")
+            y_val = np.array([f(val) for val in x_val])
+        else:
+            f=smp.lambdify(x, equation, "numpy")
+            y_val=f(x_val)
+            dy=np.abs(np.diff(y_val))
+            y_val[:-1][dy > 100] = np.nan
+        fig.add_trace(go.Scatter(x=x_val, y=y_val, mode="lines", name=equatio,
+        line=dict(color="#0091f9", width=4)))
+        fig.update_layout(
+        hovermode="x unified",
+        template="plotly_white", 
+        xaxis=dict(
+            range=[-5, 5],
+            showgrid=True,
+            gridwidth=1,
+            gridcolor="rgba(200,200,200,0.7)",
+            zeroline=True,
+            zerolinewidth=2,
+            zerolinecolor="black"
+        ),
+        yaxis=dict(
+            range=[-5, 5],
+            showgrid=True,
+            gridwidth=1,
         gridcolor="rgba(200,200,200,0.7)",
         zeroline=True,
         zerolinewidth=2,
         zerolinecolor="black"
-    ),
-    yaxis=dict(
-        range=[-5, 5],
-        showgrid=True,
-        gridwidth=1,
-    gridcolor="rgba(200,200,200,0.7)",
-    zeroline=True,
-    zerolinewidth=2,
-    zerolinecolor="black"
-    ),
-    plot_bgcolor="white",
-    height=800,
-    )
-    if(selected=="definite integral"):
-        fig.add_trace(go.Scatter(
-            x=x_val[(x_val >= lower_bound) & (x_val <= upper_bound)],
-            y=y_val[(x_val >= lower_bound) & (x_val <= upper_bound)],
-            fill="tozeroy", fillcolor="rgba(99, 110, 250, 0.3)",
-            line=dict(color="rgba(0,0,0,0)"), name="integral area"
-))
-    st.plotly_chart(fig)
-except Exception as e: 
-    st.warning(f"Could not plot '{equation}'")
+        ),
+        plot_bgcolor="white",
+        height=800,
+        )
+        if(selected=="definite integral"):
+            fig.add_trace(go.Scatter(
+                x=x_val[(x_val >= lower_bound) & (x_val <= upper_bound)],
+                y=y_val[(x_val >= lower_bound) & (x_val <= upper_bound)],
+                fill="tozeroy", fillcolor="rgba(99, 110, 250, 0.3)",
+                line=dict(color="rgba(0,0,0,0)"), name="integral area"
+    ))
+        st.plotly_chart(fig)
+    except Exception as e: 
+        st.warning(f"Could not plot '{equation}'")
 

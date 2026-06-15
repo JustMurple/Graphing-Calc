@@ -13,7 +13,7 @@ transformations = (
 )
 
 
-sym_x, e=smp.symbols("x, e")
+sym_x=smp.symbols("x")
 
 sidebar = st.sidebar
 col1, col2 = st.columns([1, 3])
@@ -75,50 +75,88 @@ with sidebar:
     showzero=st.checkbox("Show axis lines", value=True)
     st.divider()
     st.subheader("Analysis tools")
-    avg = st.checkbox("Show averege value", value=False)
+    avg = st.checkbox("Show average value", value=False)
     if avg:
-        for i, block in enumerate(st.session_state.blocks):
-            expr_str=block["text"]
-            color=block["color"]
-            sympy_expression = smp.parse_expr(expr_str, transformations=transformations, local_dict={"e": smp.E}) 
-            co1, co2 = st.columns([1,1])
-            with co1:
-                a=st.number_input(f"lower bound of {sympy_expression}", value=0, key=f"lower {i}")
-            with co2:
-                b=st.number_input(f"upper bound of {sympy_expression}", value=1, key = f"upper {i}")
-            try:
-                if b-a != 0:
-                    average = (1/(b-a))*smp.integrate((sympy_expression), (sym_x, a, b))
-                    st.write(f"avg. value of {sympy_expression} between {a} and {b}")
-                    st.latex(float(average))
-                else:
-                    st.write(f"avg. value of {sympy_expression} between {a} and {b}")
-                    f=smp.lambdify(sym_x, sympy_expression, modules="numpy")
-                    st.latex(f(a))
-            except:
-                st.warning(f"Couldn't evaluate avg. value between {a} and {b}")
+        try:
+            with st.expander("", expanded=True):
+                for i, block in enumerate(st.session_state.blocks):
+                    expr_str=block["text"]
+                    color=block["color"]
+                    sympy_expression = smp.parse_expr(expr_str, transformations=transformations, local_dict={"e": smp.E}) 
+                    co1, co2 = st.columns([1,1])
+                    with co1:
+                        a=st.number_input(f"lower bound of {sympy_expression}", value=0, key=f"lower {i}")
+                    with co2:
+                        b=st.number_input(f"upper bound of {sympy_expression}", value=1, key = f"upper {i}")
+                    try:
+                        if b-a != 0:
+                            average = (1/(b-a))*smp.integrate((sympy_expression), (sym_x, a, b))
+                            st.write(f"avg. value of {sympy_expression} between {a} and {b}")
+                            st.latex(float(average))
+                        else:
+                            st.write(f"avg. value of {sympy_expression} between {a} and {b}")
+                            f=smp.lambdify(sym_x, sympy_expression, modules="numpy")
+                            st.latex(f(a))
+                    except:
+                        st.warning(f"Couldn't evaluate avg. value between {a} and {b}")
+        except:
+            st.warning("Please insert a function of x")
     derivative=st.checkbox("Show derivative", value=False)
     if derivative:
-        for block in st.session_state.blocks:
-            expr_str=block["text"]
-            color=block["color"]
-            sympy_expression = smp.parse_expr(expr_str, transformations=transformations, local_dict={"e": smp.E})
-            st.write("f'(",expr_str,")=",smp.diff(sympy_expression))
+        try:
+            with st.expander("", expanded=True):
+                for block in st.session_state.blocks:
+                    expr_str=block["text"]
+                    color=block["color"]
+                    sympy_expression = smp.parse_expr(expr_str, transformations=transformations, local_dict={"e": smp.E})
+                    st.write("f'(",expr_str,")=",smp.diff(sympy_expression))
+        except:
+            st.warning("Please insert a function of x")
     zeros=st.checkbox("Show zeros", value=False)
     if zeros:
-        for block in st.session_state.blocks:
-            expr_str=block["text"]
-            color=block["color"]
-            sympy_expression = smp.parse_expr(expr_str, transformations=transformations, local_dict={"e": smp.E})
-            st.write("Zeros of the function ", expr_str, ":")
-            sols = smp.solve(sympy_expression,sym_x)
-            realsols = [sol for sol in sols if sol.is_real]
-            a= ""
-            for zero in realsols:
-                a += str(zero) + ", "
-            st.write(a)
-            if len(realsols) == 0:
-                st.write("∅")
+        try:
+            with st.expander("", expanded=True):
+                for block in st.session_state.blocks:
+                    expr_str=block["text"]
+                    color=block["color"]
+                    sympy_expression = smp.parse_expr(expr_str, transformations=transformations, local_dict={"e": smp.E})
+                    st.write("Zeros of the function ", expr_str, ":")
+                    sols = smp.solve(sympy_expression,sym_x)
+                    realsols = [sol for sol in sols if sol.is_real]
+                    a= ""
+                    for zero in realsols:
+                        a += str(zero) + ", "
+                    st.write(a)
+                    if len(realsols) == 0:
+                        st.write("∅")
+        except:
+            st.warning("Please insert a function of x")
+    arc = st.checkbox("Compute arc length", value=False)
+    if arc:
+        try:
+            with st.expander("", expanded=True):
+                for i, block in enumerate(st.session_state.blocks):
+                    expr_str=block["text"]
+                    color=block["color"]
+                    sympy_expression = smp.parse_expr(expr_str, transformations=transformations, local_dict={"e": smp.E})
+                    try:
+                        c1, c2 = st.columns([1,1])
+                        with c1:
+                            a=st.number_input("Insert lower bound", value=0, key=f"lowarc{i}")
+                        with c2:
+                            b=st.number_input("Insert upper bound", value=1, key=f"uparc{i}")
+                        inte = smp.integrate((smp.sqrt(1+(smp.diff(sympy_expression, sym_x))**2)), (sym_x, a, b))
+                        st.write(f"Arc length of {sympy_expression} between {a} and {b} =")
+                        st.latex(inte)
+                        st.write("or")
+                        try:
+                            st.latex(float(inte))
+                        except:
+                            st.warning("Couldn't convert to decimal")
+                    except:
+                        st.warning("Couldn't compute")
+        except:
+            st.warning("Please insert a function of x")
 
 x=np.linspace(-1000, 1000, 100000)
 fig=go.Figure()

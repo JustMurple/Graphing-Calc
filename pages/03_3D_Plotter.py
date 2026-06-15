@@ -75,42 +75,60 @@ with sidebar:
         z_lower = st.number_input("z min", value=-5)
         z_upper = st.number_input("z max", value=5)   
     st.divider()
+    st.header("Analysis tools")
     partial = st.checkbox("Compute partial derivatives", value = False)
     
     if partial:
-            for block in st.session_state.blocks:
-                expr_str=block["text"]
-                color=block["color"]
-                try:
-                    symp = smp.parse_expr(expr_str, transformations=transformations, local_dict={"e": smp.E})
-                    st.latex(r"\frac{\partial}{\partial x}" + r"\left(" + smp.latex(symp) + r"\right)" + "=" + smp.latex(smp.diff(symp, sym_x)))
-                    st.latex(r"\frac{\partial}{\partial y}" + r"\left(" + smp.latex(symp) + r"\right)" + "=" + smp.latex(smp.diff(symp, sym_y)))
-                except: 
-                    st.warning(f"Could not differentiate '{smp.latex(symp)}'")
+            try:
+                with st.expander("", expanded=True):
+                    for block in st.session_state.blocks:
+                        expr_str=block["text"]
+                        color=block["color"]
+                        try:
+                            symp = smp.parse_expr(expr_str, transformations=transformations, local_dict={"e": smp.E})
+                            st.latex(r"\frac{\partial}{\partial x}" + r"\left(" + smp.latex(symp) + r"\right)" + "=" + smp.latex(smp.diff(symp, sym_x)))
+                            st.latex(r"\frac{\partial}{\partial y}" + r"\left(" + smp.latex(symp) + r"\right)" + "=" + smp.latex(smp.diff(symp, sym_y)))
+                        except: 
+                            st.warning(f"Could not differentiate '{smp.latex(symp)}'")
+            except:
+                st.warning("Please insert a function of x,y")
     critical_points= st.checkbox("Find the critical points", value = False)
     try:
         if critical_points:
-            for block in st.session_state.blocks:
-                expr_str=block["text"]
-                color=block["color"]
-                expr = smp.parse_expr(expr_str, transformations=transformations, local_dict={"e": smp.E})
-                critical = smp.solve([smp.diff(expr, sym_x), smp.diff(expr, sym_y)], [sym_x, sym_y])
-                critical = [p for p in critical if all(c.is_real is not False for c in p)]
-                for point in critical:
-                    H=smp.hessian(expr, [sym_x, sym_y])
-                    det = float(H.det().subs([(sym_x, point[0]), (sym_y, point[1])]))
-                    fxx = float(smp.diff(expr, sym_x, 2).subs([(sym_x, point[0]), (sym_y, point[1])]))
-                    if det > 0:
-                        if fxx > 0:
-                            st.write(expr, f"Local minimum at {point}")
-                        else:
-                            st.write(expr, f"Local maximum at {point}")
-                    elif det < 0:
-                        st.write(expr, f"Saddle point at {point}")
-                    else:
-                        st.write(expr, f" Iconclusive at {point}")
-    except Exception as e:
-        st.warning(f"Could not compute: {e}")
+            try:
+                with st.expander("", expanded=True):
+                    for block in st.session_state.blocks:
+                        expr_str=block["text"]
+                        color=block["color"]
+                        expr = smp.parse_expr(expr_str, transformations=transformations, local_dict={"e": smp.E})
+                        critical = smp.solve(
+                        [smp.diff(expr, sym_x), smp.diff(expr, sym_y)],
+                        [sym_x, sym_y],
+                        dict=True
+                        )
+                        critical = [
+                        (sol[sym_x], sol[sym_y])
+                        for sol in critical
+                        if sol[sym_x].is_real is not False
+                        and sol[sym_y].is_real is not False
+                        ]
+                        for point in critical:
+                            H=smp.hessian(expr, [sym_x, sym_y])
+                            det = float(H.det().subs([(sym_x, point[0]), (sym_y, point[1])]))
+                            fxx = float(smp.diff(expr, sym_x, 2).subs([(sym_x, point[0]), (sym_y, point[1])]))
+                            if det > 0:
+                                if fxx > 0:
+                                    st.write(expr, f"Local minimum at {point}")
+                                else:
+                                    st.write(expr, f"Local maximum at {point}")
+                            elif det < 0:
+                                st.write(expr, f"Saddle point at {point}")
+                            else:
+                                st.write(expr, f" Inconclusive at {point}")
+            except Exception as e:
+                st.warning(f"Could not compute")
+    except: 
+        st.warning("Please insert a function of x,y")
 
 x=np.linspace(x_lower, x_upper, 100)
 y=np.linspace(y_lower, y_upper, 100)
@@ -144,7 +162,7 @@ for block in st.session_state.blocks:
 ))
     except:
         with col1:
-            st.warning(f"Could not plot '{input_function}'")
+            st.warning(f"Could not plot '{expr_str}'")
 fig.update_layout(
             scene=dict(
             xaxis=dict(
