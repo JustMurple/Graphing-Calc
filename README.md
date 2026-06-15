@@ -41,14 +41,6 @@ Plotting is done with Plotly — the 2D tracer handles discontinuities by maskin
 
 The vector field visualizer uses plotly.figure_factory.create_quiver. The grid density stays fixed at 20×20 while the domain adjusts, so you don't get 10,000 arrows when you zoom in.
 
-
-Run locally
-
-bashgit clone https://github.com/yourusername/math-tools
-cd math-tools
-pip install streamlit sympy numpy plotly
-streamlit run Home.py
-
 Requires Python 3.9+.
 
 
