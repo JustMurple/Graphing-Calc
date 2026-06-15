@@ -26,8 +26,8 @@ x^2 - y^2,
 e^(-(x^2 + y^2))
 
 # Vector fields
-U = -y,  V = x       ← rotation field, curl = 2
-U = x,   V = y 
+U = -y,  V = x       ← rotation field, curl = 2;
+U = x,   V = y; 
 U = y,   V = x       ← conservative, curl = 0, the potential function is computed automatically when "compute curl" option is selected
 
 
