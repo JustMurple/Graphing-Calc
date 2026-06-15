@@ -1,8 +1,5 @@
 import plotly.figure_factory as ff
 import numpy as np
-import chart_studio.plotly as py
-import plotly.express as px
-import plotly.graph_objects as go
 import streamlit as st
 import sympy as smp
 from sympy.parsing.sympy_parser import parse_expr, standard_transformations, implicit_multiplication_application, convert_xor
@@ -48,10 +45,8 @@ with sidebar:
             curle = smp.simplify(vx-uy)
             st.latex(rf"\operatorname{{curl}}(\vec{{F}}) = {smp.latex(curle)}")
             if curle == 0:
-                gv = smp.parse_expr(V)
-                gu = smp.parse_expr(U)
-                pot = smp.integrate(gu, sym_x)
-                pot += smp.integrate(gv - smp.diff(pot, sym_y), sym_y)
+                pot = smp.integrate(U, sym_x)
+                pot += smp.integrate(V - smp.diff(pot, sym_y), sym_y)
                 st.latex(rf"""\begin{{aligned}}
                 \nabla f &= \vec{{F}} \\
                 \text{{where }} f &= {smp.latex(pot)}
@@ -59,6 +54,7 @@ with sidebar:
                 """)
         except Exception as e:
             st.warning("Couldn't compute")
+            st.write(e)
     div = st.checkbox("Compute divergence")
     if div:
         try:

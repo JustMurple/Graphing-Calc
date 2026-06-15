@@ -1,6 +1,4 @@
 import numpy as np
-import chart_studio.plotly as py
-import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
 import sympy as smp
@@ -77,6 +75,28 @@ with sidebar:
     showzero=st.checkbox("Show axis lines", value=True)
     st.divider()
     st.subheader("Analysis tools")
+    avg = st.checkbox("Show averege value", value=False)
+    if avg:
+        for i, block in enumerate(st.session_state.blocks):
+            expr_str=block["text"]
+            color=block["color"]
+            sympy_expression = smp.parse_expr(expr_str, transformations=transformations, local_dict={"e": smp.E}) 
+            co1, co2 = st.columns([1,1])
+            with co1:
+                a=st.number_input(f"lower bound of {sympy_expression}", value=0, key=f"lower {i}")
+            with co2:
+                b=st.number_input(f"upper bound of {sympy_expression}", value=1, key = f"upper {i}")
+            try:
+                if b-a != 0:
+                    average = (1/(b-a))*smp.integrate((sympy_expression), (sym_x, a, b))
+                    st.write(f"avg. value of {sympy_expression} between {a} and {b}")
+                    st.latex(float(average))
+                else:
+                    st.write(f"avg. value of {sympy_expression} between {a} and {b}")
+                    f=smp.lambdify(sym_x, sympy_expression, modules="numpy")
+                    st.latex(f(a))
+            except:
+                st.warning(f"Couldn't evaluate avg. value between {a} and {b}")
     derivative=st.checkbox("Show derivative", value=False)
     if derivative:
         for block in st.session_state.blocks:

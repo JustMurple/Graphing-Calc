@@ -1,6 +1,4 @@
 import numpy as np
-import chart_studio.plotly as py
-import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
 import sympy as smp

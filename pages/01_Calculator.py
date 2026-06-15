@@ -1,6 +1,4 @@
 import numpy as np
-import chart_studio.plotly as py
-import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
 import sympy as smp
@@ -21,7 +19,7 @@ x, a, b, y, z=smp.symbols("x, a, b, y, z")
 sidebar = st.sidebar
 
 with sidebar:
-    selected = st.selectbox("Select a tool:", ["integral", "equation", "derivative", "definite integral", "limit", "double integral"])
+    selected = st.selectbox("Select a tool:", ["integral", "expression", "derivative", "definite integral", "limit", "double integral", "triple integral"])
     if selected == "definite integral":
         st.divider()
         upper_bound=st.number_input("Insert the upper bound", value=0)
@@ -43,20 +41,39 @@ with sidebar:
         with c2:
             y_low=st.text_input("Insert the y lower bound", value=0)
             y_up=st.text_input("Insert the y upper bound", value=0)
+    if selected == "triple integral":
+        order = st.text_input("Write the order of integration in the form dxdydz", value="dxdydz")
+        c1,c2,c3 = st.columns([1,1,1])
+        with c1: 
+            x_low=st.text_input("Insert the x lower bound", value=0)
+            x_up=st.text_input("Insert the x upper bound", value=0)
+        with c2:
+            y_low=st.text_input("Insert the y lower bound", value=0)
+            y_up=st.text_input("Insert the y upper bound", value=0)
+        with c3:
+            z_low=st.text_input("Insert the z lower bound", value=0)
+            z_up=st.text_input("Insert the z upper bound", value=0)
+
 
 with column1: 
     c1, c2 = st.columns([2,1])
     with c1:
         st.header("Calculator")
         st.divider()
-        if selected == "equation": 
-            equatio=st.text_input("Write the equation", value="5+5")
+        if selected == "expression": 
+            equatio=st.text_input("Write an expression", value="15*22")
             try:
                 equation = smp.parse_expr(equatio, transformations=transformations, local_dict={"e": smp.E})
             except:
                 pass
         elif selected == "double integral":
             equatio = st.text_input("f(x,y)=", value="x")
+            try:
+                equation = smp.parse_expr(equatio, transformations=transformations, local_dict={"e": smp.E})
+            except:
+                pass
+        elif selected == "triple integral":
+            equatio=st.text_input("f(x,y,z)=", value="x")
             try:
                 equation = smp.parse_expr(equatio, transformations=transformations, local_dict={"e": smp.E})
             except:
@@ -70,9 +87,9 @@ with column1:
 with column2:
     st.header("Answer")
     st.divider()
-    c1,c2,c3 = st.columns([1,1,1])
     with st.container(border=True):
-        if selected == "equation":
+        if selected == "expression":
+            c1,c2,c3 = st.columns([1,1,1])
             try:
                 if equation.free_symbols:
                     st.error("Enter a number/expression, not a function")
@@ -133,6 +150,30 @@ with column2:
                         st.latex(smp.integrate(equation, (x, xlow, xup), (y, ylow, yup)))
             except Exception as e:
                 st.warning("Could not compute the double integral, use a and b if you need constants in the bounds")
+        if selected == "triple integral":
+            try:
+                if x_low and x_up and y_low and y_up and z_low and z_up:
+                    xlow = smp.parse_expr(x_low, transformations=transformations, local_dict={"e": smp.E})
+                    xup = smp.parse_expr(x_up, transformations=transformations, local_dict={"e": smp.E})
+                    ylow = smp.parse_expr(y_low, transformations=transformations, local_dict={"e": smp.E})
+                    yup = smp.parse_expr(y_up, transformations=transformations, local_dict={"e": smp.E})
+                    zlow = smp.parse_expr(z_low, transformations=transformations, local_dict={"e": smp.E})
+                    zup = smp.parse_expr(z_up, transformations=transformations, local_dict={"e": smp.E})
+                    if order == "dxdydz":
+                        st.latex(smp.integrate(equation, (x, xlow, xup), (y, ylow, yup), (z, zlow, zup)))
+                    elif order == "dxdzdy":
+                        st.latex(smp.integrate(equation, (x, xlow, xup), (z, zlow, zup), (y, ylow, yup)))
+                    elif order == "dydxdz":
+                        st.latex(smp.integrate(equation, (y, ylow, yup), (x, xlow, xup), (z, zlow, zup)))
+                    elif order == "dydzdx":
+                        st.latex(smp.integrate(equation, (y, ylow, yup), (z, zlow, zup), (x, xlow, xup)))
+                    elif order == "dzdxdy":
+                        st.latex(smp.integrate(equation, (z, zlow, zup), (x, xlow, xup), (y, ylow, yup)))
+                    elif order == "dzdydx":
+                        st.latex(smp.integrate(equation, (z, zlow, zup), (y, ylow, yup), (x, xlow, xup)))               
+                    else: st.warning("Please check order of integration carefully")
+            except Exception as e:
+                st.waring("Couldn't integrate")
 
 fig=go.Figure()
 x_val=np.linspace(-1000,1000,100000)
@@ -181,5 +222,4 @@ try:
     st.plotly_chart(fig)
 except Exception as e: 
     st.warning(f"Could not plot '{equation}'")
-    st.write(e)
 
