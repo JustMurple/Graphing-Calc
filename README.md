@@ -16,13 +16,13 @@ Vector Fields — plots 2D vector fields F = <U, V> as quiver plots. Computes cu
 Try these
 
 # Graphing calculator
-sin(x)/x
-x^3 - 2*x
+sin(x)/x, 
+x^3 - 2*x, 
 e^(-x^2)
 
 # 3D plotter
-sin(x)*cos(y)
-x^2 - y^2
+sin(x)*cos(y),
+x^2 - y^2,
 e^(-(x^2 + y^2))
 
 # Vector fields
