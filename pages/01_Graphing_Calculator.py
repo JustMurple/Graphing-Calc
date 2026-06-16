@@ -4,7 +4,7 @@ import streamlit as st
 import sympy as smp
 from sympy.parsing.sympy_parser import parse_expr, standard_transformations, implicit_multiplication_application, convert_xor
 
-st.set_page_config(page_title="Graphing Calculator", layout="wide")
+st.set_page_config(page_title="2D Graphing Calculator", layout="wide")
 
 transformations = (
     standard_transformations +
@@ -31,7 +31,7 @@ def mikami(index):
     st.session_state.blocks.pop(index)
 
 with col1:
-    st.header("Graphing Calculator")
+    st.header("Single variable Graphing Calculator")
     st.divider()
     st.subheader("Functions:")
     for i, block in enumerate(st.session_state.blocks):
@@ -187,7 +187,7 @@ for block in st.session_state.blocks:
 
     except Exception as e:
         with col1:
-            st.warning(f"Could not plot '{expr_str}'")
+            st.warning(f"Could not plot '{expr_str}', please insert a function of x")
 
 fig.update_layout(
     hovermode="x unified",
