@@ -12,20 +12,20 @@ with col1:
     with st.container(border=True):
         st.subheader("Graphing calculator")
         st.write("Plot multiple functions simultaneously. Compute derivatives, zeros, average value, and arc length.")
-        st.code("try: sin(x)/x , x^3 - 2x , e^(-x^2)", language=None)
+        st.code("try: sin(x)/x", language=None)
         st.page_link("pages/01_Graphing_Calculator.py", label="Open →")
 
     with st.container(border=True):
         st.subheader("Calculator")
         st.write("Symbolic computation: integrals, derivatives, limits, and double/triple integrals with exact results.")
-        st.code("try: ∫ sin(x²) dx , lim x→∞ (1+1/x)^x", language=None)
+        st.code("try: ∫ sin(x²) dx", language=None)
         st.page_link("pages/02_Calculator.py", label="Open →")
 
 with col2:
     with st.container(border=True):
         st.subheader("3D plotter")
         st.write("Visualize surfaces f(x, y) in 3D. Finds critical points, saddle points, and partial derivatives.")
-        st.code("try: sin(x)*cos(y) , x^2 - y^2 , e^(-(x^2+y^2))", language=None)
+        st.code("try: sin(x)*cos(y)", language=None)
         st.page_link("pages/03_3D_Plotter.py", label="Open →")
 
     with st.container(border=True):
